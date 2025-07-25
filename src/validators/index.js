@@ -5,7 +5,14 @@ export const userRegistrationValidator = () => {
         body('email')
         .trim()
         .notEmpty().withMessage("Email is required")
-        .isEmail().withMessage("Email is invalid")
+        .isEmail().withMessage("Email is invalid"),
+        body("username")
+        .trim()
+        .isLength({min:3}).withMessage("Username should be atleast 3 char")
+        .isLength({max:6}).withMessage("max character cannot exceed 13 char"),
+        body("password")
+        .trim()
+        .notEmpty().withMessage("Password cannot be empty")
     ]
 }
 export const userLoginValidator = () => {
