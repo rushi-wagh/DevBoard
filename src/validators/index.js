@@ -10,6 +10,9 @@ export const userRegistrationValidator = () => {
         .trim()
         .isLength({min:3}).withMessage("Username should be atleast 3 char")
         .isLength({max:6}).withMessage("max character cannot exceed 13 char"),
+        body("fullname")
+        .notEmpty().withMessage("Name is required")
+        .trim(),
         body("password")
         .trim()
         .notEmpty().withMessage("Password cannot be empty")

@@ -1,0 +1,17 @@
+import { ApiResponse } from "../utils/api-response.js";
+import { asyncHandler } from "../utils/async-handler.js";
+import jwt from "jsonwebtoken"
+
+export const isLoggedIn = asyncHandler(async(req,res,next) => {
+    const token = req.cookies.loginToken
+    console.log(token)
+    if (!token){
+        return res.status(404).json(
+            new ApiResponse(404,null,"No token found")
+        )
+    }
+    const decodedToken = jwt.verify(token,process.env.LOGIN_TOKEN_SECRET)
+
+    req.user = decodedToken
+    next()
+})
