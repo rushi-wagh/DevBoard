@@ -3,14 +3,14 @@ import { asyncHandler } from "../utils/async-handler.js";
 import jwt from "jsonwebtoken"
 
 export const isLoggedIn = asyncHandler(async(req,res,next) => {
-    const token = req.cookies.loginToken
+    const token = req.cookies.accessToken
     console.log(token)
     if (!token){
         return res.status(404).json(
             new ApiResponse(404,null,"No token found")
         )
     }
-    const decodedToken = jwt.verify(token,process.env.LOGIN_TOKEN_SECRET)
+    const decodedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET)
 
     req.user = decodedToken
     next()
