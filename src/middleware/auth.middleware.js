@@ -1,5 +1,6 @@
 import { ApiResponse } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/async-handler.js";
+import {User} from "../models/user.models.js"
 import jwt from "jsonwebtoken"
 
 export const isLoggedIn = asyncHandler(async(req,res,next) => {
@@ -11,8 +12,11 @@ export const isLoggedIn = asyncHandler(async(req,res,next) => {
         )
     }
     const decodedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET)
-    console.log(decodedToken)
+    // console.log(decodedToken)
+    const user = await User.findById(decodedToken.id)
 
-    req.user = decodedToken
+    console.log(user)
+
+    req.user = user
     next()
 })

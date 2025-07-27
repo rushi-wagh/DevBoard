@@ -42,7 +42,7 @@ const registerUser = asyncHandler(async (req, res) => {
   console.log("hashed token in register controller", hashedToken);
   user.emailVerificationToken = hashedToken;
   user.emailVerificationExpiry = Date.now() + 10 * 60 * 1000;
-  await user.save();
+  await user.save({validateBeforeSave:false});
   const emailUrl = `${process.env.BASE_URL}/api/v1/auth/verify-email/${emailVerificationToken}`;
   await sendEmail({
     email: user.email,
@@ -146,9 +146,9 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 const verifyEmail = asyncHandler(async (req, res) => {
   const { emailVerificationToken } = req.params;
-  console.log(emailVerificationToken.length);
+  // console.log(emailVerificationToken.length);
   const token = emailVerificationToken.trim();
-  console.log("Token after trim:", token, "Length:", token.length);
+  // console.log("Token after trim:", token, "Length:", token.length);
 
   console.log("token in verify controller", token);
   if (!emailVerificationToken) {

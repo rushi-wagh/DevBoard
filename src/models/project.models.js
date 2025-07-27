@@ -1,6 +1,7 @@
 import mongoose,{Schema} from "mongoose"
 
-const projectSchema= new Schema({name :{
+const projectSchema= new Schema({
+    title :{
         type:String,
         required:true,
         unique:true,
@@ -8,7 +9,7 @@ const projectSchema= new Schema({name :{
     },
     description : {
         type:String,
-        // required:true, 
+        required:true, 
         trim: true
     },
     createdBy :{
