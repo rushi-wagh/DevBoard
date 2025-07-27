@@ -1,5 +1,5 @@
 import express from "express"
-import { changeCurrentPassword, forgotPasswordRequest, getCurrentUser, loginUser, logoutUser, registerUser, resetForgottenPassword, verifyEmail } from "../controllers/auth.controllers.js"
+import { changeCurrentPassword, forgotPasswordRequest, getCurrentUser, loginUser, logoutUser, refreshAccessToken, registerUser, resendEmailVerification, resetForgottenPasswordToken, verifyEmail } from "../controllers/auth.controllers.js"
 import { validate } from "../middleware/validator.middleware.js"
 import { userRegistrationValidator,userLoginValidator } from "../validators/index.js"
 import { isLoggedIn } from "../middleware/auth.middleware.js"
@@ -14,5 +14,8 @@ router.get('/profile',isLoggedIn,getCurrentUser)
 router.get('/verify-email/:emailVerificationToken',verifyEmail);
 router.post('/forgot-password',forgotPasswordRequest)
 router.post('/reset-password/:resetToken',changeCurrentPassword)
+router.get('/refresh-accesstoken',refreshAccessToken)
+router.get('/resend-verification',isLoggedIn,resendEmailVerification)
+router.get('/resend-forgot',resetForgottenPasswordToken)
 
 export default router
