@@ -1,7 +1,7 @@
 import mongoose,{Schema} from "mongoose"
 
 const subTaskSchema= new Schema({
-    title :{
+    title : {
         type: String,
         required :true,
         trim:true

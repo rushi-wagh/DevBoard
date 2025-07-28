@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import Healthcheck from "./routes/healthCheck.routes.js";
 import Auth from "./routes/auth.routes.js"
 import Project from "./routes/project.routes.js"
+import Task from "./routes/Task.routes.js"
 
 const app = express()
 app.use(cookieParser())
@@ -16,4 +17,5 @@ app.use(express.json())
 app.use('/api/v1/health',Healthcheck)
 app.use('/api/v1/auth',Auth)
 app.use('/api/v1/project',Project)
+app.use('/api/v1/task',Task)
 export default app
