@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/async-handler.js";
 import { ApiError } from "../utils/api-error.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { project } from "../models/project.models.js";
+import { projectMember } from "../models/projectmember.models.js";
 
 const getProjects = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -34,38 +35,38 @@ const getProjectById = asyncHandler(async (req, res) => {
 });
 
 const createProject = asyncHandler(async (req, res) => {
-  // get data
+
   const { title, description } = req.body;
   const userId = req.user._id;
-  // validate
+
   if (!title || !description) {
     throw new ApiError(401, "All fields are required");
   }
-  //check if existing project
+  
   const existingProject = await project.findOne({ title });
   console.log(existingProject);
-  // return if existing
+  
   if (existingProject) {
     throw new ApiError(401, "Project already exists");
   }
-  // create if nope
+  
   const Project = await project.create({
     title,
     description,
-    createdBy: userId,
+    createdBy: userId
   });
-  //return response
+ 
   return res
     .status(200)
     .json(new ApiResponse(200, Project, "project created succesfully"));
 });
 
 const updateProject = asyncHandler(async (req, res) => {
-  // get project by id
+ 
   const { title, description } = req.body;
   const id = req.params.id;
 
-  // validation
+
   if (!id) {
     throw new ApiError(400, "Project id must be required", []);
   }
@@ -87,12 +88,11 @@ const updateProject = asyncHandler(async (req, res) => {
 
   await Project.save({ validateBeforeSave: false });
 
-  // Respond with a success message indicating that the project was update successfully.
+ 
   return res
     .status(200)
-    .json(new ApiResponse(200,Project, "Project updated successfully"));
+    .json(new ApiResponse(200, Project, "Project updated successfully"));
 });
-
 
 const deleteProject = async (req, res) => {
   //get project id from user
@@ -102,8 +102,8 @@ const deleteProject = async (req, res) => {
   }
   //find project and delete it
   const Project = await project.findByIdAndDelete(id);
-  if(!Project){
-    throw new ApiError(401,"no project found")
+  if (!Project) {
+    throw new ApiError(404, "no project found");
   }
   //validate
   //send response
@@ -113,19 +113,106 @@ const deleteProject = async (req, res) => {
 };
 
 const getProjectMembers = async (req, res) => {
-  // get project members
+  const { id } = req.params;
+
+  const ProjectMember = await projectMember
+    .find({ project: id })
+    .populate("user", "username");
+  const members = ProjectMember.map((m) => m.user.username);
+  console.log(members);
+  return res.status(200).json(new ApiResponse(200, members, "members"));
 };
 
 const addMemberToProject = async (req, res) => {
-  // add member to project
+  const { projectId } = req.params;
+  const { userId } = req.body;
+
+  if (!projectId) {
+    throw new ApiError(401, "No token found");
+  }
+  if (!userId) {
+    throw new ApiError(401, "No userId found");
+  }
+  const existingMember = await projectMember.findOne({
+    $and: [{ project: projectId }, { user: userId }],
+  });
+  console.log("existing", existingMember);
+  if (existingMember) {
+    throw new ApiError(400, "Already member of project");
+  }
+  const Project = await project.findById(projectId);
+  if (!Project) {
+    throw new ApiError(404, "No Project found");
+  }
+  const ProjectMember = await projectMember.create({
+    user: userId,
+    project: Project,
+  });
+
+  if (!ProjectMember) {
+    throw new ApiError(400, "error while adding member");
+  }
+  return res.status(200).json(new ApiResponse(200, ProjectMember, "Added"));
 };
 
-const deleteMember = async (req, res) => {
-  // delete member from project
-};
+const deleteMember = asyncHandler(async (req, res) => {
+  const { projectId, userId } = req.params;
+
+  if (!userId || !projectId) {
+    throw new ApiError(400, "Project ID and User ID are required");
+  }
+
+  const Project = await project.findById(projectId);
+  if (!Project) {
+    throw new ApiError(404, "Project does not exist");
+  }
+
+  const memberToDelete = await projectMember.findOneAndDelete({
+    project: projectId,
+    user: userId,
+  });
+
+  if (!memberToDelete) {
+    throw new ApiError(404, "Team member not found in this project");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, memberToDelete, "Team member removed successfully")
+    );
+});
 
 const updateMemberRole = async (req, res) => {
-  // update member role
+  const { projectId, userId } = req.params;
+  const { role } = req.body;
+
+  if ([projectId, role, userId].some((field) => !field?.trim())) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  const Project = await project.findById(projectId);
+
+  if (!Project) {
+    throw new ApiError(404, "Project does not exist");
+  }
+
+  const existInTeam = await projectMember.findOne({ user: userId });
+
+  if (!existInTeam) {
+    throw new ApiError(404, "Team member does not exist");
+  }
+
+  if (existInTeam.role === role) {
+    throw new ApiError(400, "This user already has the same role");
+  }
+
+  existInTeam.role = role;
+  await existInTeam.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, existInTeam, "Team member role updated"));
 };
 
 export {

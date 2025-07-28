@@ -19,9 +19,7 @@ const registerUser = asyncHandler(async (req, res) => {
   // console.log(ExistingUser)
 
   if (ExistingUser) {
-    return res
-      .status(409)
-      .json(new ApiResponse(409, null, "User already exists"));
+    throw new ApiError(402,"User already exists");
   }
 
   const user = await User.create({
@@ -42,7 +40,7 @@ const registerUser = asyncHandler(async (req, res) => {
   console.log("hashed token in register controller", hashedToken);
   user.emailVerificationToken = hashedToken;
   user.emailVerificationExpiry = Date.now() + 10 * 60 * 1000;
-  await user.save({validateBeforeSave:false});
+  await user.save({ validateBeforeSave: false });
   const emailUrl = `${process.env.BASE_URL}/api/v1/auth/verify-email/${emailVerificationToken}`;
   await sendEmail({
     email: user.email,
@@ -66,27 +64,18 @@ const registerUser = asyncHandler(async (req, res) => {
     );
 });
 
+
 const loginUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
   // console.log(password)
   const user = await User.findOne({ email });
 
   if (!user) {
-    return res
-      .status(404)
-      .json(new ApiResponse(404, null, "User not found,please register"));
+    throw new ApiError(401,"Email not registerd")
   }
   const isMatched = await bcrypt.compare(password, user.password);
   if (!isMatched) {
-    return res
-      .status(401)
-      .json(
-        new ApiResponse(
-          401,
-          null,
-          "Invalid credientials please enter correct credientials"
-        )
-      );
+    throw new ApiError(401,"Invalid email or password")
   }
   const accessToken = jwt.sign(
     {
@@ -152,18 +141,20 @@ const verifyEmail = asyncHandler(async (req, res) => {
 
   console.log("token in verify controller", token);
   if (!emailVerificationToken) {
-    return res.status(401).json(new ApiResponse(401, null, "no token found"));
+   throw new ApiError(401,"no token found")
   }
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
   console.log("in verify", hashedToken);
 
   const user = await User.findOne({
-    emailVerificationToken: hashedToken,
-    emailVerificationTokenExpiry: { $gt: Date.now() },
+    $and: [
+      { emailVerificationToken: hashedToken },
+      { emailVerificationExpiry: { $gt: Date.now() } },
+    ],
   });
   console.log(user);
   if (!user) {
-    return res.status(400).json(new ApiResponse(401, null, "no user found"));
+    throw new ApiError(401, "Invalid token")
   }
   user.isEmailVerified = true;
   user.emailVerificationToken = undefined;
@@ -180,27 +171,25 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
   const user = await User.findById(id);
   console.log(user);
   if (!user) {
-    return res.status(404).json(new ApiResponse(404, null, "User not found"));
+    throw new ApiError(401,"Invalid token")
   }
   if (user.isEmailVerified) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, null, "Email is already verified"));
+    throw new ApiError(401,"Email already verified")
   }
   const emailVerificationToken = crypto.randomBytes(32).toString("hex");
-  console.log(
-    "current token",
-    user.emailVerificationToken,
-    "gen token",
-    emailVerificationToken
-  );
+  // console.log(
+  //   "current token",
+  //   user.emailVerificationToken,
+  //   "gen token",
+  //   emailVerificationToken
+  // );
   user.emailVerificationToken = "";
   await user.save();
   const hashedemailVerificationToken = crypto
     .createHash("sha256")
     .update(emailVerificationToken)
     .digest("hex");
-  console.log("in resend", hashedemailVerificationToken);
+  // console.log("in resend", hashedemailVerificationToken);
   user.emailVerificationToken = hashedemailVerificationToken;
   await user.save();
   const emailUrl = `${process.env.BASE_URL}/api/v1/auth/verify-email/${emailVerificationToken}`;
@@ -216,7 +205,7 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "Email Verification link sent"));
 });
-const resetForgottenPasswordToken = asyncHandler(async (req, res) => {});
+
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const { refreshToken } = req.cookies;
@@ -232,13 +221,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     console.error("Token verification error:", err);
 
     if (err.name === "TokenExpiredError") {
-      return res
-        .status(401)
-        .json(new ApiResponse(401, null, "Refresh token expired"));
+     throw new ApiError(401,"Refresh token expired");
     }
-    return res
-      .status(403)
-      .json(new ApiResponse(403, null, "Invalid refresh token"));
+    else {
+      throw new ApiError(401,"Invalid token")
+    }
   }
 
   const user = await User.findById(payload.id);
@@ -249,9 +236,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   console.log(refreshToken);
 
   if (user.refreshToken !== refreshToken) {
-    return res
-      .status(403)
-      .json(new ApiResponse(403, null, "Refresh token mismatch"));
+    throw new ApiError(403,"Token do not match")
   }
 
   const newAccessToken = jwt.sign(
@@ -298,7 +283,7 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
   if (!user) {
-    res.status(404).json(new ApiResponse(404, null, "Email not registered"));
+    throw new ApiError(401,"Invalid token")
   }
   const unhashedToken = crypto.randomBytes(32).toString("hex");
 
@@ -364,7 +349,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   console.log(user);
 
   if (!user) {
-    return res.status(404).json(new ApiResponse(404, null, "No user found"));
+    throw new ApiError(401,"Invalid token")
   }
 
   return res
@@ -381,6 +366,6 @@ export {
   refreshAccessToken,
   registerUser,
   resendEmailVerification,
-  resetForgottenPasswordToken,
-  verifyEmail,
+  
+  verifyEmail
 };
