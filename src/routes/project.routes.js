@@ -12,7 +12,7 @@ router.delete('/delete-project/:id',isLoggedIn,deleteProject)
 router.post('/add-member/:projectId',addMemberToProject)
 router.get('/members/:id',getProjectMembers)
 router.get('/delete-member/:projectId/:userId',isLoggedIn,deleteMember)
-router.post('/update-role/:projectId/:userId',isLoggedIn,updateMemberRole)
+router.put('/update-role/:projectId/:userId',isLoggedIn,updateMemberRole)
 
 
 export default router

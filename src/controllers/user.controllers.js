@@ -365,7 +365,6 @@ export {
   logoutUser,
   refreshAccessToken,
   registerUser,
-  resendEmailVerification,
-  
+  resendEmailVerification,  
   verifyEmail
 };
