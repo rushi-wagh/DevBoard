@@ -15,10 +15,10 @@ export const isLoggedIn = asyncHandler(async(req,res,next) => {
         )
     }
     const decodedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET)
-    // console.log(decodedToken)
+    console.log(decodedToken)
     const user = await User.findById(decodedToken.id).select("-password -refreshToken")
-
-    // console.log(user)
+    console.log("In middleware",user)
+    
 
     req.user = user
     next()
@@ -31,11 +31,13 @@ export const validateProjectPermission = (roles=[]) => asyncHandler(async(req,re
     if(!projectId){
         throw new ApiError(401,"no id provided")
     }
-
+    console.log("project",projectId)
     const Project = await projectMember.findOne({
-        project :projectId,
+        project : new mongoose.Types.ObjectId(projectId),
+
         user :req.user._id
     })
+    console.log(Project)
     
     if(!Project){
         throw new ApiError(401,"No Project found")

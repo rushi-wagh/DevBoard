@@ -7,7 +7,7 @@ import { isLoggedIn } from "../middleware/auth.middleware.js"
 
 const router = express.Router()
 
-router.post('/register',userRegistrationValidator(),validate,registerUser)//factory pattern
+router.post('/register',userRegistrationValidator(),validate,registerUser)
 router.post('/login',userLoginValidator(),loginUser)
 router.get('/logout',isLoggedIn,logoutUser)
 router.get('/profile',isLoggedIn,getCurrentUser)

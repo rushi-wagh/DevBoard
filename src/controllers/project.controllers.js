@@ -197,22 +197,22 @@ const updateMemberRole = async (req, res) => {
     throw new ApiError(404, "Project does not exist");
   }
 
-  const existInTeam = await projectMember.findOne({ user: userId });
+  const existInProject = await projectMember.findOne({ user: userId });
 
-  if (!existInTeam) {
-    throw new ApiError(404, "Team member does not exist");
+  if (!existInProject) {
+    throw new ApiError(404, "Project member does not exist");
   }
 
-  if (existInTeam.role === role) {
+  if (existInProject.role === role) {
     throw new ApiError(400, "This user already has the same role");
   }
 
-  existInTeam.role = role;
-  await existInTeam.save({ validateBeforeSave: false });
+  existInProject.role = role;
+  await existInProject.save({ validateBeforeSave: false });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, existInTeam, "Team member role updated"));
+    .json(new ApiResponse(200, existInProject, "Team member role updated"));
 };
 
 export {

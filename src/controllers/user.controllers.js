@@ -16,7 +16,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const { email, username, password, role, fullname } = req.body;
 
   const ExistingUser = await User.findOne({ email });
-  // console.log(ExistingUser)
+
 
   if (ExistingUser) {
     throw new ApiError(402,"User already exists");
@@ -37,7 +37,6 @@ const registerUser = asyncHandler(async (req, res) => {
     .update(emailVerificationToken)
     .digest("hex");
   let hashedemailVerificationToken = hashedToken;
-  console.log("hashed token in register controller", hashedToken);
   user.emailVerificationToken = hashedToken;
   user.emailVerificationExpiry = Date.now() + 10 * 60 * 1000;
   await user.save({ validateBeforeSave: false });
@@ -67,7 +66,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
-  // console.log(password)
+
   const user = await User.findOne({ email });
 
   if (!user) {
@@ -109,7 +108,7 @@ const loginUser = asyncHandler(async (req, res) => {
     secure: true,
     maxAge: 24 * 60 * 60 * 1000 * 10,
   };
-  //cookie name cannot have spaces
+
 
   return res
     .status(200)
@@ -135,9 +134,9 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 const verifyEmail = asyncHandler(async (req, res) => {
   const { emailVerificationToken } = req.params;
-  // console.log(emailVerificationToken.length);
+  
   const token = emailVerificationToken.trim();
-  // console.log("Token after trim:", token, "Length:", token.length);
+
 
   console.log("token in verify controller", token);
   if (!emailVerificationToken) {
@@ -152,7 +151,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
       { emailVerificationExpiry: { $gt: Date.now() } },
     ],
   });
-  console.log(user);
+ 
   if (!user) {
     throw new ApiError(401, "Invalid token")
   }
@@ -177,19 +176,14 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
     throw new ApiError(401,"Email already verified")
   }
   const emailVerificationToken = crypto.randomBytes(32).toString("hex");
-  // console.log(
-  //   "current token",
-  //   user.emailVerificationToken,
-  //   "gen token",
-  //   emailVerificationToken
-  // );
+  
   user.emailVerificationToken = "";
   await user.save();
   const hashedemailVerificationToken = crypto
     .createHash("sha256")
     .update(emailVerificationToken)
     .digest("hex");
-  // console.log("in resend", hashedemailVerificationToken);
+  
   user.emailVerificationToken = hashedemailVerificationToken;
   await user.save();
   const emailUrl = `${process.env.BASE_URL}/api/v1/auth/verify-email/${emailVerificationToken}`;
